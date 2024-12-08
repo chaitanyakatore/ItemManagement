@@ -6,7 +6,7 @@ const Crud = ({ token }) => {
   const [items, setItems] = useState([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [editingId, setEditingId] = useState(null);
+  const [editingItem, setEditingItem] = useState(null);
 
   const fetchItems = async () => {
     try {
@@ -42,7 +42,7 @@ const Crud = ({ token }) => {
         { name: updatedName, description: updatedDescription },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setEditingId(null);
+      setEditingItem(null);
       fetchItems();
     } catch (error) {
       alert("Failed to update item.");
@@ -66,9 +66,7 @@ const Crud = ({ token }) => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-        Item Management
-      </h2>
+      <h2 className="text-3xl font-bold mb-6 text-gray-800">Item Management</h2>
 
       {/* Add Item Form */}
       <form
@@ -78,11 +76,11 @@ const Crud = ({ token }) => {
         <div className="flex space-x-4 mb-4">
           <input
             type="text"
-            placeholder="Item Name"
+            placeholder="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <input
             type="text"
@@ -90,84 +88,111 @@ const Crud = ({ token }) => {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             required
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
             type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center space-x-2"
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
-            <PlusCircle className="w-5 h-5" />
-            <span>Add Item</span>
+            <PlusCircle className="mr-2" /> Add Item
           </button>
         </div>
       </form>
 
-      {/* Items List */}
+      {/* Item List */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="flex items-center px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition"
-          >
-            {editingId === item.id ? (
-              <>
-                <input
-                  type="text"
-                  value={item.name}
-                  onChange={(e) =>
-                    updateItem(item.id, e.target.value, item.description)
-                  }
-                  className="flex-1 mr-4 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-                <input
-                  type="text"
-                  value={item.description}
-                  onChange={(e) =>
-                    updateItem(item.id, item.name, e.target.value)
-                  }
-                  className="flex-1 mr-4 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() =>
-                      updateItem(item.id, item.name, item.description)
-                    }
-                    className="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setEditingId(null)}
-                    className="bg-gray-300 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-400 transition"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-800">{item.name}</p>
-                  <p className="text-gray-500 text-sm">{item.description}</p>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setEditingId(item.id)}
-                    className="text-blue-600 hover:text-blue-800 transition"
-                  >
-                    <Edit className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => deleteItem(item.id)}
-                    className="text-red-600 hover:text-red-800 transition"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        ))}
+        <table className="w-full">
+          <thead className="bg-gray-100 border-b">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Name
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Description
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {items.map((item) => (
+              <tr key={item._id} className="hover:bg-gray-50">
+                {editingItem?._id === item._id ? (
+                  <>
+                    <td className="px-6 py-4">
+                      <input
+                        value={editingItem.name}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            name: e.target.value,
+                          })
+                        }
+                        className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </td>
+                    <td className="px-6 py-4">
+                      <input
+                        value={editingItem.description}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            description: e.target.value,
+                          })
+                        }
+                        className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      <button
+                        onClick={() =>
+                          updateItem(
+                            editingItem._id,
+                            editingItem.name,
+                            editingItem.description
+                          )
+                        }
+                        className="text-green-600 hover:text-green-800 transition-colors"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingItem(null)}
+                        className="text-red-600 hover:text-red-800 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {item.name}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {item.description}
+                    </td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      <button
+                        onClick={() => setEditingItem(item)}
+                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                      >
+                        <Edit className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => deleteItem(item._id)}
+                        className="text-red-600 hover:text-red-800 transition-colors"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </td>
+                  </>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

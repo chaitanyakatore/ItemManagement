@@ -1,5 +1,5 @@
 const express = require("express");
-const mysql = require("mysql2");
+const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const bodyParser = require("body-parser");
@@ -13,58 +13,62 @@ const SECRET_KEY = "mysecretkey";
 app.use(bodyParser.json());
 app.use(cors());
 
-// MySQL connection
-const db = mysql.createConnection({
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "crud_app",
+// MongoDB connection
+const mongoURI =
+  "mongodb+srv://root:root@cluster0.9eyfu.mongodb.net/myDatabase";
+
+mongoose
+  .connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("Connected to MongoDB database."))
+  .catch((err) => console.error("Database connection failed:", err.message));
+
+// Define User Schema
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
 });
 
-// Connect to the database
-db.connect((err) => {
-  if (err) {
-    console.error("Database connection failed:", err.message);
-    return;
-  }
-  console.log("Connected to MySQL database.");
+// Define Item Schema
+const itemSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  description: { type: String },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 });
+
+// Create Models
+const User = mongoose.model("User", userSchema);
+const Item = mongoose.model("Item", itemSchema);
 
 // User Registration
 app.post("/register", async (req, res) => {
   const { username, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  db.query(
-    "INSERT INTO users (username, password) VALUES (?, ?)",
-    [username, hashedPassword],
-    (err) => {
-      if (err) return res.status(500).send("User registration failed.");
-      res.status(201).send("User registered successfully.");
-    }
-  );
+  try {
+    const newUser = new User({ username, password: hashedPassword });
+    await newUser.save();
+    res.status(201).send("User registered successfully.");
+  } catch (err) {
+    res.status(500).send("User registration failed.");
+  }
 });
 
 // User Login
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
-  db.query(
-    "SELECT * FROM users WHERE username = ?",
-    [username],
-    async (err, results) => {
-      if (err || results.length === 0)
-        return res.status(400).send("Invalid credentials.");
+  try {
+    const user = await User.findOne({ username });
+    if (!user) return res.status(400).send("Invalid credentials.");
 
-      const user = results[0];
-      const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) return res.status(400).send("Invalid credentials.");
 
-      if (!isPasswordValid) return res.status(400).send("Invalid credentials.");
-
-      const token = jwt.sign({ id: user.id }, SECRET_KEY);
-      res.status(200).send({ token });
-    }
-  );
+    const token = jwt.sign({ id: user._id }, SECRET_KEY);
+    res.status(200).send({ token });
+  } catch (err) {
+    res.status(500).send("Login failed.");
+  }
 });
 
 // Middleware for Authentication
@@ -80,47 +84,48 @@ const authenticate = (req, res, next) => {
 };
 
 // CRUD Operations
-app.get("/items", authenticate, (req, res) => {
-  db.query("SELECT * FROM items", (err, results) => {
-    if (err) return res.status(500).send("Failed to fetch items.");
-    res.status(200).json(results);
-  });
+app.get("/items", authenticate, async (req, res) => {
+  try {
+    const items = await Item.find({ userId: req.userId });
+    res.status(200).json(items);
+  } catch (err) {
+    res.status(500).send("Failed to fetch items.");
+  }
 });
 
-app.post("/items", authenticate, (req, res) => {
+app.post("/items", authenticate, async (req, res) => {
   const { name, description } = req.body;
 
-  db.query(
-    "INSERT INTO items (name, description) VALUES (?, ?)",
-    [name, description],
-    (err) => {
-      if (err) return res.status(500).send("Failed to add item.");
-      res.status(201).send("Item added successfully.");
-    }
-  );
+  try {
+    const newItem = new Item({ name, description, userId: req.userId });
+    await newItem.save();
+    res.status(201).send("Item added successfully.");
+  } catch (err) {
+    res.status(500).send("Failed to add item.");
+  }
 });
 
-app.put("/items/:id", authenticate, (req, res) => {
+app.put("/items/:id", authenticate, async (req, res) => {
   const { id } = req.params;
   const { name, description } = req.body;
 
-  db.query(
-    "UPDATE items SET name = ?, description = ? WHERE id = ?",
-    [name, description, id],
-    (err) => {
-      if (err) return res.status(500).send("Failed to update item.");
-      res.status(200).send("Item updated successfully.");
-    }
-  );
+  try {
+    await Item.findByIdAndUpdate(id, { name, description });
+    res.status(200).send("Item updated successfully.");
+  } catch (err) {
+    res.status(500).send("Failed to update item.");
+  }
 });
 
-app.delete("/items/:id", authenticate, (req, res) => {
+app.delete("/items/:id", authenticate, async (req, res) => {
   const { id } = req.params;
 
-  db.query("DELETE FROM items WHERE id = ?", [id], (err) => {
-    if (err) return res.status(500).send("Failed to delete item.");
+  try {
+    await Item.findByIdAndDelete(id);
     res.status(200).send("Item deleted successfully.");
-  });
+  } catch (err) {
+    res.status(500).send("Failed to delete item.");
+  }
 });
 
 // Start the server
