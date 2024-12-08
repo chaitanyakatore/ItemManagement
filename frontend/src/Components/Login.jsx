@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { Lock, User, Loader2 } from "lucide-react";
 
@@ -7,6 +8,7 @@ const Login = ({ setToken }) => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -20,20 +22,19 @@ const Login = ({ setToken }) => {
       });
       setToken(response.data.token);
 
-      // Animate success message
       const successMessage = document.getElementById("success-message");
       successMessage.classList.remove("opacity-0");
       successMessage.classList.add("opacity-100");
 
-      // Reset form
       setTimeout(() => {
         setUsername("");
         setPassword("");
       }, 1000);
+
+      // Redirect to Dashboard on successful login
+      navigate("/dashboard");
     } catch (error) {
       setError("Invalid credentials. Please try again.");
-
-      // Shake animation for error
       const form = document.getElementById("login-form");
       form.classList.add("animate-shake");
       setTimeout(() => form.classList.remove("animate-shake"), 500);
@@ -64,7 +65,7 @@ const Login = ({ setToken }) => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
-                  className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-gray-100 focus:bg-white"
+                  className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl"
                 />
               </div>
 
@@ -76,7 +77,7 @@ const Login = ({ setToken }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-gray-100 focus:bg-white"
+                  className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl"
                 />
               </div>
             </div>
@@ -90,34 +91,34 @@ const Login = ({ setToken }) => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center space-x-2 font-medium"
+              className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors"
             >
               {isLoading ? (
-                <>
+                <div className="flex items-center justify-center space-x-2">
                   <Loader2 className="animate-spin h-5 w-5" />
                   <span>Signing in...</span>
-                </>
+                </div>
               ) : (
                 <span>Sign in</span>
               )}
             </button>
 
-            <div
-              id="success-message"
-              className="text-green-500 text-sm text-center opacity-0 transition-opacity duration-300"
-            >
+            <div className="text-center mt-4">
+              <p className="text-gray-600">
+                Don't have an account?{" "}
+                <Link
+                  to="/register"
+                  className="text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Register here
+                </Link>
+              </p>
+            </div>
+
+            <div id="success-message" className="opacity-0 transition-opacity">
               Login successful!
             </div>
           </form>
-
-          <div className="mt-6 text-center">
-            <a
-              href="/register"
-              className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200"
-            >
-              Forgot your password?
-            </a>
-          </div>
         </div>
       </div>
     </div>
