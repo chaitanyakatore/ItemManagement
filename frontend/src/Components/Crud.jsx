@@ -10,7 +10,7 @@ const Crud = ({ token }) => {
 
   const fetchItems = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/items", {
+      const response = await axios.get("http://54.226.233.59:5000/items", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setItems(response.data);
@@ -23,7 +23,7 @@ const Crud = ({ token }) => {
     e.preventDefault();
     try {
       await axios.post(
-        "http://localhost:5000/items",
+        "http://54.226.233.59:5000/items",
         { name, description },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -38,7 +38,7 @@ const Crud = ({ token }) => {
   const updateItem = async (id, updatedName, updatedDescription) => {
     try {
       await axios.put(
-        `http://localhost:5000/items/${id}`,
+        `http://54.226.233.59:5000/items/${id}`,
         { name: updatedName, description: updatedDescription },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -51,7 +51,7 @@ const Crud = ({ token }) => {
 
   const deleteItem = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/items/${id}`, {
+      await axios.delete(`http://54.226.233.59:5000/items/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchItems();
