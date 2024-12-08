@@ -66,7 +66,7 @@ const Crud = ({ token }) => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h2 className="text-3xl font-bold mb-6 text-gray-800">Item Management</h2>
+      <h2 className="text-3xl font-bold mb-6 text-gray-800">Items Management</h2>
 
       {/* Add Item Form */}
       <form
